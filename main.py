@@ -21,7 +21,7 @@ class Car:
 		Also keep the track that the car stays on the road (does not leave the positions -1,0,1)
 		"""
 		while self.km < 9:
-			self.current = my_track(self.km)
+			self.current = my_track.update_track(self.km, self.pos)
 			self.km += 1
 			print("My new position is {}".format(self.pos))
 			if self.pos == -2 or self.pos == 2 or self.current[int(self.pos +1)] == 1:
@@ -30,6 +30,7 @@ class Car:
 				self.choose_step()
 				self.start_turn()
 				time.sleep(1)
+				cls()
 		else:
 			print("You won!")
 			sys.exit()
@@ -53,14 +54,28 @@ class Track:
 	contain vehicles on the way (marked as '1')
 	"""
 	def __init__(self):
-		self.way = [[0,0,0], [0,0,0], [1,0,0], [0,0,0], [0,0,1], [0,0,0], [1,0,0], [0,0,0], [0,0,0]]
+		self.way = [
+		[0,0,0], 
+		[0,0,0], 
+		[1,0,0], 
+		[0,0,0], 
+		[0,0,1], 
+		[0,0,0], 
+		[1,0,0], 
+		[0,0,0], 
+		[0,0,0]]
 		self.width = 3
 		self.show_track()
 
-	def __call__(self, km):
+	def look_at_track(self, km):
+		self.way.pop()
 		self.km = self.way[km]
+
+	def update_track(self, km, pos):
+		self.way.pop()
+		self.km = self.way[km]
+		self.show_track()
 		return(self.km)
-		print(self.km)
 
 	def show_track(self):
 		for row in self.way:
@@ -69,8 +84,12 @@ class Track:
 		self.clear_screen()
 
 	def clear_screen(self):
-	    os.system('cls' if os.name=='nt' else 'clear')
+		os.system('cls' if os.name=='nt' else 'clear')
 
+
+def cls():
+	""" Clear the screen """
+	os.system('cls' if os.name=='nt' else 'clear')
 
 
 
