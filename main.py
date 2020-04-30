@@ -1,43 +1,24 @@
-""" Let the car randomly navigate over the track.
-The right choices/turns should be reinforced 
-by the Q-Learning algorithm
+""" Control the reinforcement algorithm
+over multiple training episodes
 """
 import time
-import random
-import os
 from datetime import datetime
 
 from learning import Learning
-
-class Car:
-	""" Moving object """
-	def __init__(self):
-		""" The car can take positions -1,0,1 on the track,
-		Every turn the car can move one position to the left or
-		one position to the right
-		"""
-		self.pos = 1
-		self.km = 0
-
-	def retrieve_pos(self):
-		""" Get the coordinates """
-		return self.pos, self.km
-
-	def drive(self):
-		""" Move one forward """
-		self.km += 1
-
-	def choose_step(self):
-		""" Randomly move left or right """
-		next_turn = random.randrange(-1,2)
-		self.pos += next_turn
+from model_objects import Car, Track
 
 
-class Game:
+
+class Game_Episode:
 	""" Control the game board and its elements"""
-	def __init__(self):
-		self.timestamp = datetime.now().strftime('%Y%m%d_%H_%M_%S')
-		self.my_track = Track(self.timestamp)
+	
+	def __init__(self, Learning, episode, timestamp, time_between_step, mode):
+		""" Run an episode in mode test/train """
+		self.Learning = Learning
+		self.Q = self.Learning.retrieve_q_matrix()
+		self.episode = episode
+		self.timestamp = timestamp
+		self.my_track = Track(self.timestamp, self.episode, mode)
 		self.my_car = Car()
 		self.my_way = self.my_track.retrieve_way()
 
@@ -45,23 +26,49 @@ class Game:
 		self.current_car_display = None
 		self.new_pos_x = None
 		self.new_pos_y = None
-		self.old_pos_x = 0
-		self.L = Learning(self.timestamp)
-		print(self.L.R)
+		self.old_pos_x = 2
+		self.time_between_step = time_between_step
 
-	def start_game(self):
-		""" Start game """
+	def run_train_episode(self):
+		""" Start a training episode:
+		- Move the car along the track until an accident occurs.
+		- The horizontal navigation is randomly chosen
+		- Update the Q matrix
+		"""
+
 		while self.step < 9:
 			self.step += 1
 			
 			self.new_pos_x, self.new_pos_y = self.my_car.retrieve_pos()
 			evaluation = self.evaluate_position()
-			self.L.update_q(self.new_pos_x, self.old_pos_x)
-			self.my_track.update_track(self.new_pos_x, self.new_pos_y, self.current_car_display)
-			time.sleep(.5)
+			self.Learning.update_q(self.new_pos_x, self.old_pos_x, self.episode)
+
+			self.my_track.update_track(self.new_pos_x, self.new_pos_y, self.car_display)
+			#time.sleep(self.time_between_step)
 			if not evaluation:
 				break
-			self.my_car.choose_step()
+			self.my_car.random_step()
+			self.my_car.drive()
+			self.old_pos_x = self.new_pos_x
+
+	def run_test_episode(self):
+		""" Start a test episode:
+		- Decide based on the values in the Q matrix
+		on the best step to take
+		- Move the car along the track
+		"""
+
+		while self.step < 9:
+			self.step += 1
+			
+			self.new_pos_x, self.new_pos_y = self.my_car.retrieve_pos()
+			evaluation = self.evaluate_position()
+
+			self.my_track.update_track(self.new_pos_x, self.new_pos_y, self.car_display)
+			time.sleep(self.time_between_step)
+			if not evaluation:
+				break
+			self.my_car.smart_step(self.Q)
 			self.my_car.drive()
 			self.old_pos_x = self.new_pos_x
 
@@ -69,73 +76,49 @@ class Game:
 		""" Decide if this is a valid position based
 		on the track composition
 		"""
-		if self.new_pos_x == 3:
-			self.new_pos_x = 2
-			self.current_car_display = 8
-			outcome = False
-		elif self.new_pos_x == -1:
-			self.new_pos_x = 0
-			self.current_car_display = 8
-			outcome = False
-		elif self.my_way[self.new_pos_y][self.new_pos_x] == 1:
-			self.current_car_display = 8
+
+		if self.my_way[self.new_pos_y][self.new_pos_x] == 1:
+			self.car_display = 8
 			outcome = False
 		else:
-			self.current_car_display = 7
+			self.car_display = 7
 			outcome = True
 		
 		return outcome
 
 
-class Track:
-	""" The track consists of # km. Each km can
-	contain vehicles on the way (marked as '1')
+class Game:
+	""" Loop over multiple episodes to
+	train the reinforcement model
 	"""
-	def __init__(self, timestamp):
-		self.timestamp = timestamp
-		self.initial_way = [[0, 0, 0], 
-							[0, 0, 0], 
-							[0, 0, 0], 
-							[0, 0, 0], 
-							[0, 0, 0], 
-							[0, 0, 0], 
-							[0, 0, 0], 
-							[0, 0, 0], 
-							[0, 0, 0]]
-		self.way = self.initial_way
-		clear_screen()
+	def __init__(self, total_episodes, time_training_step, time_testing_step):
+		self.timestamp = datetime.now().strftime('%Y%m%d_%H_%M_%S')
+		self.Learning = Learning(self.timestamp)
+		self.total_episodes = total_episodes
 
-	def retrieve_way(self):
-		""" Return the track composition """
-		return self.way
-
-	def update_track(self, pos, km, display):
-		""" Update the track to display the current position
-		of the car
+	def train_model(self):
+		""" Run the model a multiple number of times
+		to fill the Q matrix
 		"""
-		self.way = self.initial_way
-		old_value = self.way[km][pos]
-		self.way[km][pos] = display
-		self.show_track()
-		# Delete the traces of the last step performed
-		self.way[km][pos] = old_value
+		for episode in range(self.total_episodes):
+			Episode = Game_Episode(self.Learning, episode, self.timestamp, time_training_step, "train")
+			Episode.run_train_episode()
+		
 
-	def show_track(self):
-		""" Display the track on a clean screen """
-		clear_screen()
-		with open("log_{}.txt".format(self.timestamp), 'a') as log:
-			log.write(str("Logging Track:\n"))
-			for row in self.way:
-				print(row)
-				log.write("{}\n".format(str(row)))
-
-
-def clear_screen():
-	""" Remove all console output """
-	os.system('cls' if os.name == 'nt' else 'clear')
-
+	def test_prediction(self):
+		""" Using the filled Q matrix, test the learned parameters """
+		Episode = Game_Episode(self.Learning, self.total_episodes, self.timestamp, time_testing_step, "test")
+		Episode.run_test_episode()
 
 
 if __name__ == '__main__':
-	Game = Game()
-	Game.start_game()
+	# Define the number of episodes to train the model
+	episodes_nr = 10
+	# Define the time in seconds to wait between making each step
+	time_training_step = 0
+	time_testing_step = 1
+	Game = Game(episodes_nr, time_training_step, time_testing_step)
+	# Train the car on the track
+	Game.train_model()
+	# After training, test the track using the learned parameters
+	Game.test_prediction()
