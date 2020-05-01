@@ -10,13 +10,14 @@ from datetime import datetime
 
 class Car:
 	""" Moving object """
-	def __init__(self, Q=None):
+	def __init__(self, dim, Q=None):
 		""" The car can take horizontal positions
 		on the track.
 		"""
 		self.pos_x = 2
 		self.pos_y = 0
 		self.Q = Q
+		self.dim_x = dim[1]
 
 	def retrieve_pos(self):
 		""" Get the coordinates """
@@ -39,29 +40,48 @@ class Car:
 		Q matrix row to decide on the next 
 		horizontal action
 		"""
-		max_index = np.argmax(Q[self.pos_x, ])
-		self.pos_x = max_index
+		# Obtain the correct index for the current state
+		q_row_index = self.pos_y * self.dim_x + self.pos_x
+		q_row = Q[q_row_index, ]
+		# Sort the indeces according to their values in descending order
+		max_indeces = np.argsort(q_row)[::-1]
+		# Loop over the sorted indeces to find the first 
+		# allowed position with highest probability
+		for index in max_indeces:
+			# The difference between the new position and the old one should not exceed 1
+			if abs(self.pos_x - index % self.dim_x) <= 1:
+				self.pos_x = index % self.dim_x
+				break
 
 class Track:
 	""" The track consists of # km. Each km can
 	contain vehicles on the way (marked as '1')
 	"""
-	def __init__(self, timestamp, episode, mode):
-
-		log_name = "{timestamp}_track_{mode}_log.txt".format(timestamp=timestamp, mode=mode)
+	def __init__(self, timestamp):
+		""" The Track will be initialised once 
+		to obtain the track dimensions
+		"""
+		log_name = "{timestamp}_track_log.csv".format(timestamp=timestamp)
 		self.log_path = os.path.join(os.getcwd(), "logs", log_name)
-		self.episode = episode
-		self.initial_way = [[1, 0, 0, 0, 1], 
-							[1, 0, 0, 0, 1], 
-							[1, 0, 0, 0, 1], 
-							[1, 0, 0, 0, 1], 
-							[1, 0, 0, 0, 1], 
-							[1, 0, 0, 0, 1], 
-							[1, 0, 0, 0, 1], 
-							[1, 0, 0, 0, 1], 
-							[1, 0, 0, 0, 1]]
+		self.initial_way = np.array([[1, 0, 0, 0, 1], 
+									 [1, 1, 0, 0, 1], 
+									 [1, 0, 1, 0, 1], 
+									 [1, 1, 0, 0, 1], 
+									 [1, 0, 0, 1, 1],
+									 [1, 0, 1, 0, 1],
+									 [1, 0, 0, 0, 1],
+									 [1, 1, 0, 0, 1],
+									 [1, 0, 1, 0, 1],
+									 [1, 0, 0, 0, 1],
+									 [1, 0, 0, 1, 1],
+									 [1, 1, 0, 0, 1] 
+									])
 		self.way = self.initial_way
-		clear_screen()
+
+	def __call__(self, episode):
+		""" The track will be resetted by a call in every new episode """
+		self.episode = episode
+		self.way = self.initial_way
 
 	def retrieve_way(self):
 		""" Return the track composition """
@@ -72,11 +92,11 @@ class Track:
 		of the car
 		"""
 		self.way = self.initial_way
-		old_value = self.way[km][pos]
-		self.way[km][pos] = display
+		old_value = self.way[km, pos]
+		self.way[km, pos] = display
 		self.show_track()
 		# Delete the traces of the last step performed
-		self.way[km][pos] = old_value
+		self.way[km, pos] = old_value
 
 	def show_track(self):
 		""" Display the track on a clean screen """
