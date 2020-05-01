@@ -11,7 +11,6 @@ class Learning:
 		log_q_name = "{timestamp}_Q_log.csv".format(timestamp=timestamp)
 		self.log_q_path = os.path.join(os.getcwd(), "logs", log_q_name)
 		
-
 		# Array to save the learning parameters
 		self.learning_parameters = []
 		# Gamma learning parameter.
@@ -45,7 +44,8 @@ class Learning:
 
 		# Update the Q matrix using the Bellmann equation
 		self.Q[current_state, next_state] = self.Q[current_state, next_state] + self.gamma * (reward + max_value - self.Q[current_state, next_state])
-		self.Q = np.round(self.Q, 2)
+		#self.Q = 
+		self.Q = np.matrix(np.round(self.Q, 2))
 		# Log the updated Q matrix
 		with open(self.log_q_path, 'a') as log:
 			log.write("Logging Q matrix for episode {}:\n".format(episode))
@@ -53,6 +53,7 @@ class Learning:
 			log.write("Next state x y {}\n".format(next_st))
 			log.write("{}\n".format(self.Q))
 
+		return self.Q
 
 	def save_numbers(self, episode):
 		""" Save the important number for further processing later """

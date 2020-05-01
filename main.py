@@ -11,9 +11,14 @@ from learning import Learning
 from model_objects import Car, Track
 
 
-
 class Game_Episode:
-	""" Control the game board and its elements"""
+	""" Control the board and its elements.
+	Execute one game instance = one episode.
+
+	During the episode the object is trying
+	semi-randomly to choose its path to reach the goal.
+	
+	"""
 
 	def __init__(self, Learning, Track, episode, timestamp, time_between_step):
 		""" Run an episode in mode test/train """
@@ -37,25 +42,26 @@ class Game_Episode:
 		self.time_between_step = time_between_step
 
 	def run_train_episode(self):
-		""" Start a training episode:
-		- Move the car along the track until an accident occurs.
-		- The horizontal navigation is randomly chosen
+		""" Execute one training episode
+		- Make a move along the track
+		- Update the track view
 		- Update the Q matrix
 		"""
-
 		while self.step < self.track_dimensions[0]:
 			self.step += 1
 			
 			self.new_pos_x, self.new_pos_y = self.my_car.retrieve_pos()
 			outcome, reward = self.evaluate_position()
 			if self.step > 1:
-				self.Learning.update_q([self.new_pos_x, self.new_pos_y], [self.old_pos_x, self.old_pos_y], reward, self.episode)
+				self.Q = self.Learning.update_q([self.new_pos_x, self.new_pos_y], [self.old_pos_x, self.old_pos_y], reward, self.episode)
 			self.Learning.save_numbers(self.episode)
 			self.my_track.update_track(self.new_pos_x, self.new_pos_y, self.car_display)
 			time.sleep(self.time_between_step)
+
+			# Stop the current episode if an accident occurs
 			if not outcome:
 				break
-			self.my_car.random_step()
+			self.my_car.random_step(self.Q)
 			self.my_car.drive()
 			self.old_pos_x, self.old_pos_y = self.new_pos_x, self.new_pos_y
 
@@ -74,6 +80,8 @@ class Game_Episode:
 
 			self.my_track.update_track(self.new_pos_x, self.new_pos_y, self.car_display)
 			time.sleep(self.time_between_step)
+
+			# Stop the current episode if an accident occurs
 			if not outcome:
 				break
 			self.my_car.smart_step(self.Q)
@@ -145,18 +153,19 @@ class Game:
 		plt.xlabel("Episode")
 		plt.ylabel("Sum of squared Q matrix elements")
 		plt.savefig(plot_path)
+
 		# Save the learning parameters explicitly to a file
 		with open(log_num_path, 'w') as log:
 			log.write(str(parameters) + "\n")
-		
+		plt.show()
 
 
 if __name__ == '__main__':
 	# Define the number of episodes to train the model
-	episodes_nr = 5
+	episodes_nr = 50
 	# Define the time in seconds to wait between making each step
-	time_training_step = 0.1
-	time_testing_step = 1
+	time_training_step = 0
+	time_testing_step = .5
 	Game = Game(episodes_nr, time_training_step, time_testing_step)
 	# Train the car on the track
 	Game.train_model()

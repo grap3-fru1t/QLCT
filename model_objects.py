@@ -28,26 +28,46 @@ class Car:
 		Move one  state forward """
 		self.pos_y += 1
 
-	def random_step(self):
-		""" Change the horizontal state:
-		Randomly move left or right """
-		next_turn = random.randrange(-1,2)
-		self.pos_x += next_turn
+	def random_step(self, Q):
+		""" Used for training process
+		Change the horizontal state:
+		Randomly move left or right if allowed
+		"""
+		#print(Q)
+		# Obtain the correct index for the current state
+		q_row_index = self.pos_y * self.dim_x + self.pos_x
+
+		q_row = np.array(Q[q_row_index])[0]
+
+		# Find allowed positions to switch from current position
+		allowed_indices = np.array([(self.pos_y + 1) * self.dim_x  + self.pos_x,
+								 (self.pos_y + 1) * self.dim_x  + self.pos_x - 1,
+								 (self.pos_y + 1) * self.dim_x  + self.pos_x + 1])
+		try:
+			# Randomly choose an index for the action if value is non-negative
+			next_index = random.choice([index for index in allowed_indices if q_row[index] >= 0])
+			# Update the x position
+			self.pos_x = next_index % self.dim_x
+		except IndexError:
+			# End of the track has been reached
+			return
+
 
 	def smart_step(self, Q):
-		""" Change the horizontal state:
+		""" Used for testing process
+		Change the horizontal state:
 		Use the maximum value in the corresponding
 		Q matrix row to decide on the next 
 		horizontal action
 		"""
 		# Obtain the correct index for the current state
 		q_row_index = self.pos_y * self.dim_x + self.pos_x
-		q_row = Q[q_row_index, ]
+		q_row = np.array(Q[q_row_index, ])
 		# Sort the indeces according to their values in descending order
-		max_indeces = np.argsort(q_row)[::-1]
+		max_indeces = np.argsort(q_row)[0]
 		# Loop over the sorted indeces to find the first 
 		# allowed position with highest probability
-		for index in max_indeces:
+		for index in max_indeces[::-1]:
 			# The difference between the new position and the old one should not exceed 1
 			if abs(self.pos_x - index % self.dim_x) <= 1:
 				self.pos_x = index % self.dim_x
@@ -66,15 +86,14 @@ class Track:
 		self.initial_way = np.array([[1, 0, 0, 0, 1], 
 									 [1, 1, 0, 0, 1], 
 									 [1, 0, 1, 0, 1], 
-									 [1, 1, 0, 0, 1], 
-									 [1, 0, 0, 1, 1],
-									 [1, 0, 1, 0, 1],
-									 [1, 0, 0, 0, 1],
-									 [1, 1, 0, 0, 1],
-									 [1, 0, 1, 0, 1],
-									 [1, 0, 0, 0, 1],
-									 [1, 0, 0, 1, 1],
-									 [1, 1, 0, 0, 1] 
+									 [1, 1, 0, 1, 1], 
+									 [1, 0, 1, 0, 1], 
+									 [1, 1, 0, 1, 1], 
+									 [1, 0, 1, 0, 1], 
+									 [1, 1, 0, 1, 1], 
+									 [1, 0, 1, 0, 1], 
+									 [1, 1, 0, 1, 1], 
+									 [1, 0, 1, 0, 1]
 									])
 		self.way = self.initial_way
 
