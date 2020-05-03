@@ -18,7 +18,7 @@ TOPOLOGY_LOG = os.path.join("logs", "track_topology.npy")
 MOVES_LOG = os.path.join("logs", "all_moves.obj")
 
 # time between each display/step update in ms
-TIME_BETWEEN_STEPS = 300
+TIME_BETWEEN_STEPS = 200
 
 
 class Agent(QWidget):
@@ -191,7 +191,6 @@ class MainWindow(QMainWindow):
 
     def update_episode_timer(self):
         """ Execute a gui display update at every new timer event"""
-        self.init_map()
         if self.episode < self.length_all_episodes:
             # Choose the mode to be displayed
             if self.episode == self.length_all_episodes - 1:
@@ -210,7 +209,6 @@ class MainWindow(QMainWindow):
             else:
                 self.episode += 1
                 self.step = 0
-                self.reset_map()
             
 if __name__ == '__main__':
     app = QApplication([])
