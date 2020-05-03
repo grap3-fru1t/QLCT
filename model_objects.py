@@ -1,22 +1,19 @@
-""" Let the car randomly navigate over the track.
+""" Let the agent randomly navigate over the track.
 The right choices/turns should be reinforced 
 by the Q-Learning algorithm
 """
-import time
 import random
 import os
 import numpy as np
-from datetime import datetime
 
-class Car:
+class Agent:
 	""" Moving object """
-	def __init__(self, dim, Q=None):
-		""" The car can take horizontal positions
-		on the track.
+	def __init__(self, dim):
+		""" The agent can take horizontal/vertical positions
+		on the track. 
 		"""
 		self.pos_x = 2
 		self.pos_y = 0
-		self.Q = Q
 		self.dim_x = dim[1]
 
 	def retrieve_pos(self):
@@ -33,7 +30,6 @@ class Car:
 		Change the horizontal state:
 		Randomly move left or right if allowed
 		"""
-		#print(Q)
 		# Obtain the correct index for the current state
 		q_row_index = self.pos_y * self.dim_x + self.pos_x
 
@@ -74,8 +70,10 @@ class Car:
 				break
 
 class Track:
-	""" The track consists of # km. Each km can
-	contain vehicles on the way (marked as '1')
+	""" The track lives as a vertical x horizontal grid structure
+	Empty road elements are marked with 0
+	Heavy wall elements on the road are marked with 1
+	Light road elements on ´the road are marked with 2
 	"""
 	def __init__(self, timestamp):
 		""" The Track will be initialised once 
@@ -83,17 +81,22 @@ class Track:
 		"""
 		log_name = "{timestamp}_track_log.csv".format(timestamp=timestamp)
 		self.log_path = os.path.join(os.getcwd(), "logs", log_name)
-		self.initial_way = np.array([[1, 0, 0, 0, 1], 
-									 [1, 1, 0, 0, 1], 
-									 [1, 0, 1, 0, 1], 
-									 [1, 1, 0, 1, 1], 
-									 [1, 0, 1, 0, 1], 
-									 [1, 1, 0, 1, 1], 
-									 [1, 0, 1, 0, 1], 
-									 [1, 1, 0, 1, 1], 
-									 [1, 0, 1, 0, 1], 
-									 [1, 1, 0, 1, 1], 
-									 [1, 0, 1, 0, 1]
+		self.initial_way = np.array([[1, 0, 0, 0, 0, 1], 
+									 [1, 1, 0, 0, 0, 1], 
+									 [1, 0, 2, 0, 1, 1], 
+									 [1, 1, 0, 2, 0, 1], 
+									 [1, 0, 1, 0, 0, 1], 
+									 [1, 2, 0, 0, 0, 1], 
+									 [1, 0, 1, 2, 0, 1], 
+									 [1, 1, 0, 0, 0, 1], 
+									 [1, 0, 1, 0, 1, 1], 
+									 [1, 1, 0, 0, 0, 1], 
+									 [1, 0, 1, 2, 0, 1], 
+									 [1, 0, 0, 0, 0, 1], 
+									 [1, 1, 2, 0, 1, 1], 
+									 [1, 0, 1, 0, 2, 1], 
+									 [1, 1, 0, 2, 0, 1], 
+									 [1, 0, 1, 0, 0, 1]
 									])
 		self.way = self.initial_way
 
@@ -106,16 +109,16 @@ class Track:
 		""" Return the track composition """
 		return self.way
 
-	def update_track(self, pos, km, display):
+	def update_track(self, pos_x, pos_y, display):
 		""" Update the track to display the current position
-		of the car
+		of the agent
 		"""
 		self.way = self.initial_way
-		old_value = self.way[km, pos]
-		self.way[km, pos] = display
+		old_value = self.way[pos_y, pos_x]
+		self.way[pos_y, pos_x] = display
 		self.show_track()
 		# Delete the traces of the last step performed
-		self.way[km, pos] = old_value
+		self.way[pos_y, pos_x] = old_value
 
 	def show_track(self):
 		""" Display the track on a clean screen """
@@ -124,8 +127,7 @@ class Track:
 			log.write("Logging Track for episode {}:\n".format(self.episode))
 			for row in self.way:
 				print(row)
-				log.write("{}\n".format(str(row)))
-
+				log.write(str(row) + "\n")
 
 def clear_screen():
 	""" Remove all console output """
