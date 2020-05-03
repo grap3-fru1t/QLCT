@@ -199,7 +199,7 @@ class Game:
 
 if __name__ == '__main__':
 	# Define the number of episodes to train the model
-	episodes_nr = 150
+	episodes_nr = 65
 	# Define the time in seconds to wait between making each step
 	time_training_step = 0
 	time_testing_step = 0

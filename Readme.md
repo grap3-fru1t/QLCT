@@ -17,11 +17,18 @@ To modify the track:
 * Open 	`model_objects.py`. Modify the np.array `self.initial_way` if necessary. 0 is open space, 1 is a wall element that causes a major crash. 2 is causing a minor crash, the vehicle can take 3 minor crashes.
 
 To run a training/testing session
-* Open `main.py`. Redefine the number of episodes `episodes_nr` to be trained. Increase the variables `time_training_step` and `time_testing_step` if you would like to follow the training/testing in the console.
+* Open `main.py`. Redefine the number of episodes `episodes_nr` to be trained. Increase the variables `time_training_step` and `time_testing_step` if you would like to follow the training/testing in the console. To run the training/testing, run  `python main.py`
+![](sample_images/sample_run.gif)
 
 To display the training/testing in a graphical interface
-* To display the training/testing performed in a graphical interface, run `view.py`. Modify the variable `TIME_BETWEEN_STEPS` to change the time between every step update. The view will use the pickle object containing all steps and the numpy array saved containing the topology save during the headless training/testing session under logs/.
+* To display the training/testing performed in a graphical interface, run `python view.py`. Modify the variable `TIME_BETWEEN_STEPS` to change the time between every step update. The view will use the pickle object containing all steps and the numpy array saved containing the topology save during the headless training/testing session under logs/.
+![](sample_images/preview.gif)
 
+## Environment
+- Python 3.7.2
+- PyQt 5.14.2
+- numpy1.16.1
+- matplotlib 3.0.2
 
 ## References
 Q-Learning implementation adapted from: 
