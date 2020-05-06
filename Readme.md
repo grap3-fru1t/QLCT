@@ -19,19 +19,12 @@ To modify the track:
 To run a training/testing session
 * Open `main.py`. Redefine the number of episodes `episodes_nr` to be trained. Increase the variables `time_training_step` and `time_testing_step` if you would like to follow the training/testing in the console. To run the training/testing, run  `python main.py`
 
-<<<<<<< HEAD
 Follow the agent navigating its path along the track from top to bottom:
 
 ![](sample_images/sample_run.gif)
 
 To display the training/testing in a graphical interface
 * To display the training/testing performed in a graphical interface, run `python view.py`. Modify the variable `TIME_BETWEEN_STEPS` to change the time between every step update. The view will use the pickle object containing the performed steps and the numpy array saved containing the topology saved during the headless training/testing session.
-=======
-![](sample_images/sample_run.gif)
-
-To display the training/testing in a graphical interface
-* To display the training/testing performed in a graphical interface, run `python view.py`. Modify the variable `TIME_BETWEEN_STEPS` to change the time between every step update. The view will use the pickle object containing all steps and the numpy array saved containing the topology save during the headless training/testing session under logs/.
->>>>>>> 8813adec92e47fadefea7fb845753b2a3ff764a3
 
 ![](sample_images/preview.gif)
 
